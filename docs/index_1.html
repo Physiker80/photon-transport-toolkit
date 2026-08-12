@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>photon-transport-toolkit — a validated Monte Carlo journey</title>
+<meta name="description" content="From a 2014 Master's thesis to a validated, independently cross-checked Monte Carlo engine — an interactive 3D tour of photon-transport-toolkit.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090c14; --bg-panel: #10141f; --bg-card: #151a28;
+    --border: #232a3d; --border-light: #37415a;
+    --text: #eef1f8; --text-dim: #97a2ba; --text-faint: #5c6785;
+    --accent: #f2a23c; --blue: #4d8fdb; --green: #6bb659; --red: #e2574a; --purple: #a789e0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.65; overflow-x: hidden; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  .narrow { max-width: 740px; margin: 0 auto; padding: 0 24px; }
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
+  ::selection { background: rgba(242,162,60,0.3); }
+
+  /* background grid texture */
+  .grid-bg {
+    position: fixed; inset: 0; z-index: -1; opacity: 0.35;
+    background-image:
+      linear-gradient(rgba(77,143,219,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(77,143,219,0.06) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+
+  nav.dots {
+    position: fixed; right: 28px; top: 50%; transform: translateY(-50%); z-index: 50;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  nav.dots a { width: 8px; height: 8px; border-radius: 50%; background: var(--border-light); display: block; transition: background 0.2s, transform 0.2s; }
+  nav.dots a:hover, nav.dots a.active { background: var(--accent); transform: scale(1.4); }
+  @media (max-width: 900px) { nav.dots { display: none; } }
+
+  header.hero { padding: 100px 0 64px; text-align: center; position: relative; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px; }
+  .eyebrow::before, .eyebrow::after { content: ''; width: 24px; height: 1px; background: var(--accent); opacity: 0.5; }
+  h1.title { font-size: 52px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 20px; }
+  h1.title em { font-family: 'Source Serif 4', serif; font-style: italic; font-weight: 600; color: var(--accent); }
+  .tagline { font-size: 19px; color: var(--text-dim); max-width: 620px; margin: 0 auto 36px; }
+  .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 40px; }
+  .badge { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); background: var(--bg-panel); border: 1px solid var(--border); padding: 7px 14px; border-radius: 20px; }
+  .badge b { color: var(--accent); font-weight: 500; }
+  .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid var(--border-light); transition: all 0.15s; cursor: pointer; font-family: inherit; }
+  .btn-primary { background: var(--accent); color: #14100a; border-color: var(--accent); }
+  .btn-primary:hover { background: #ffb454; }
+  .btn-ghost { color: var(--text); background: transparent; }
+  .btn-ghost:hover { border-color: var(--text-dim); background: var(--bg-panel); }
+
+  section { padding: 90px 0; border-bottom: 1px solid var(--border); position: relative; }
+  section:last-of-type { border-bottom: none; }
+  .section-num { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 13px; font-weight: 500; margin-bottom: 14px; }
+  h2 { font-size: 30px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.01em; }
+  .section-lead { color: var(--text-dim); font-size: 17px; max-width: 620px; margin-bottom: 40px; }
+
+  /* step diagram */
+  .steps-diagram { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  .step-box { background: var(--bg-panel); padding: 24px 18px; text-align: center; position: relative; }
+  .step-box .step-icon { width: 44px; height: 44px; margin: 0 auto 14px; border-radius: 10px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .step-box h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .step-box p { font-size: 12px; color: var(--text-faint); line-height: 1.5; }
+  .step-box .step-n { position: absolute; top: 10px; left: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--border-light); }
+  @media (max-width: 720px) { .steps-diagram { grid-template-columns: 1fr 1fr; } }
+
+  /* 3D sim card */
+  .sim-shell { background: linear-gradient(180deg, var(--bg-panel), var(--bg-card)); border: 1px solid var(--border); border-radius: 18px; padding: 28px; }
+  .preset-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  .preset-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); padding: 10px 8px; border-radius: 8px; font-size: 13px; font-family: inherit; cursor: pointer; transition: border-color 0.15s; text-align: center; }
+  .preset-btn.active { border-color: var(--accent); background: rgba(242,162,60,0.08); color: var(--accent); }
+  .swap-btn { width: 100%; background: var(--bg-card); border: 1px dashed var(--border-light); color: var(--text-dim); padding: 9px; border-radius: 8px; font-size: 12px; font-family: inherit; cursor: pointer; margin-bottom: 12px; }
+  .param-note { font-size: 12.5px; color: var(--text-faint); margin-bottom: 16px; min-height: 36px; line-height: 1.55; }
+  #canvas-wrap { position: relative; width: 100%; aspect-ratio: 16/10; background: #04060a; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 18px; }
+  #canvas-wrap canvas { display: block; width: 100%; height: 100%; }
+  .canvas-hint { position: absolute; bottom: 10px; left: 14px; font-size: 11px; color: var(--text-faint); font-family: 'JetBrains Mono', monospace; pointer-events: none; }
+  .legend { position: absolute; top: 12px; left: 14px; display: flex; gap: 14px; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: var(--bg-card); border-radius: 10px; padding: 14px; text-align: center; }
+  .stat-card .label { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 500; margin-top: 4px; }
+  #stat-r .value { color: var(--blue); } #stat-t .value { color: var(--green); } #stat-abs .value { color: var(--text-dim); }
+  .action-row { display: flex; gap: 8px; margin-bottom: 22px; }
+  .action-btn { flex: 1; padding: 11px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; background: var(--bg-card); border: 1px solid var(--border-light); color: var(--text); cursor: pointer; }
+  .action-btn.primary { background: var(--accent); border-color: var(--accent); color: #14100a; }
+  .action-btn:hover { filter: brightness(1.12); }
+  .compare-wrap { border-top: 1px solid var(--border); padding-top: 18px; }
+  .compare-label { font-size: 12.5px; color: var(--text-dim); margin-bottom: 12px; }
+  .compare-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .compare-name { font-size: 12px; color: var(--text-dim); width: 180px; flex-shrink: 0; }
+  .compare-track { flex: 1; background: var(--bg-card); border-radius: 5px; height: 16px; }
+  .compare-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--blue), #6ba7e8); }
+  .compare-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; width: 40px; text-align: right; }
+
+  /* finding section */
+  .finding-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 24px; }
+  .finding-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items: center; }
+  .finding-grid img { width: 100%; border-radius: 10px; border: 1px solid var(--border); }
+  .stat-line { display: flex; align-items: baseline; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .stat-line:last-child { border-bottom: none; }
+  .stat-line .n { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 500; color: var(--accent); min-width: 78px; }
+  .stat-line .d { color: var(--text-dim); font-size: 13.5px; }
+  @media (max-width: 720px) { .finding-grid { grid-template-columns: 1fr; } }
+
+  /* validated twice - timeline */
+  .val-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .val-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+  .val-card .lang { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .val-card h4 { font-size: 16px; margin-bottom: 10px; }
+  .val-card p { font-size: 13.5px; color: var(--text-dim); }
+  .bug-tag { display: inline-block; font-size: 11px; background: rgba(226,87,74,0.12); color: #f0897c; padding: 3px 8px; border-radius: 5px; margin-top: 10px; font-family: 'JetBrains Mono', monospace; }
+  @media (max-width: 720px) { .val-grid { grid-template-columns: 1fr; } }
+
+  /* twelve years timeline */
+  .timeline { position: relative; padding-left: 32px; }
+  .timeline::before { content: ''; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 2px; background: linear-gradient(180deg, var(--accent), var(--border)); }
+  .tl-item { position: relative; padding-bottom: 36px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item::before { content: ''; position: absolute; left: -32px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg); border: 2px solid var(--accent); }
+  .tl-year { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .tl-item h4 { font-size: 17px; margin-bottom: 8px; }
+  .tl-item p { color: var(--text-dim); font-size: 14.5px; }
+  .tl-item code { background: var(--bg-panel); padding: 2px 6px; border-radius: 4px; font-size: 12.5px; }
+
+  .how-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .how-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+  .how-card .num { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 13px; margin-bottom: 10px; }
+  .how-card h3 { font-size: 16px; margin-bottom: 8px; font-weight: 600; }
+  .how-card p { font-size: 14px; color: var(--text-dim); }
+
+  .disclaimer { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; font-size: 13px; color: var(--text-faint); line-height: 1.65; }
+  .disclaimer b { color: var(--text-dim); }
+
+  footer { padding: 56px 0 70px; text-align: center; }
+  footer a { color: var(--blue); text-decoration: none; font-weight: 500; }
+  footer a:hover { text-decoration: underline; }
+  footer .foot-meta { color: var(--text-faint); font-size: 13px; margin-top: 10px; }
+
+  @media (max-width: 720px) {
+    h1.title { font-size: 36px; }
+    .how-grid { grid-template-columns: 1fr; }
+    .preset-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<nav class="dots">
+  <a href="#physics" title="How it works"></a>
+  <a href="#simulate" title="3D simulation"></a>
+  <a href="#finding" title="The finding"></a>
+  <a href="#validated" title="Validated twice"></a>
+  <a href="#story" title="Ten years"></a>
+  <a href="#build" title="How it's built"></a>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Noureddin Sedki · Open-source physics</div>
+    <h1 class="title">photon-transport-<em>toolkit</em></h1>
+    <p class="tagline">A validated Monte Carlo engine for light transport in scattering media — built from first principles, independently re-derived in a second language, and traced back ten years to a Master's thesis it now quantitatively re-tests.</p>
+    <div class="badges">
+      <span class="badge"><b>110</b> tests passing</span>
+      <span class="badge">Python + <b>MATLAB/Octave</b></span>
+      <span class="badge">up to <b>70σ</b> significance</span>
+      <span class="badge">MIT licensed</span>
+    </div>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/Physiker80/photon-transport-toolkit">View on GitHub</a>
+      <a class="btn btn-ghost" href="https://github.com/Physiker80/photon-transport-toolkit/blob/main/PROJECT_REPORT.md">Read the full report</a>
+      <a class="btn btn-ghost" href="#simulate">Try the 3D simulator ↓</a>
+      <a class="btn btn-ghost" href="index.html">Prefer the short version? →</a>
+    </div>
+  </div>
+</header>
+
+<section id="physics">
+  <div class="wrap">
+    <div class="section-num">01 — The physics</div>
+    <h2>Four steps, repeated millions of times</h2>
+    <p class="section-lead">Every result on this page traces back to the same weighted-photon Monte Carlo loop, following Wang, Jacques &amp; Zheng (1995) — the MCML formulation used throughout tissue optics.</p>
+    <div class="steps-diagram">
+      <div class="step-box"><span class="step-n">01</span><div class="step-icon">→</div><h4>Sample a free path</h4><p>τ = −ln(ξ)/μₜ in optical-depth units, from a random draw ξ.</p></div>
+      <div class="step-box"><span class="step-n">02</span><div class="step-icon">⇥</div><h4>Advance &amp; check boundaries</h4><p>Cross layers by carrying remaining τ in optical-depth units, not physical distance.</p></div>
+      <div class="step-box"><span class="step-n">03</span><div class="step-icon">◐</div><h4>Deposit absorption</h4><p>Weight shrinks by μₛ/μₜ at every step — no photon is discarded outright.</p></div>
+      <div class="step-box"><span class="step-n">04</span><div class="step-icon">↝</div><h4>Scatter</h4><p>New direction sampled from the Henyey–Greenstein phase function.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="simulate">
+  <div class="wrap">
+    <div class="section-num">02 — Try it</div>
+    <h2>A live 3D Monte Carlo simulation</h2>
+    <p class="section-lead">The same physics, in three dimensions, applied to four real media. Drag to orbit, scroll to zoom — launch photons and watch where they end up.</p>
+
+    <div class="sim-shell">
+      <div class="preset-row">
+        <button class="preset-btn" id="p-clearWater" onclick="setPreset('clearWater')">Clear water</button>
+        <button class="preset-btn" id="p-turbidWater" onclick="setPreset('turbidWater')">Turbid water</button>
+        <button class="preset-btn" id="p-homogSkin" onclick="setPreset('homogSkin')">Homogeneous skin</button>
+        <button class="preset-btn" id="p-layeredSkin" onclick="setPreset('layeredSkin')">Layered skin</button>
+      </div>
+      <button class="swap-btn" id="swap-row" style="display:none" onclick="swapLayers()">⇅ swap: put the melanin-rich layer deep instead</button>
+      <div class="param-note" id="param-note"></div>
+
+      <div id="canvas-wrap">
+        <div class="legend">
+          <span><i style="background:#4d8fdb"></i>reflected</span>
+          <span><i style="background:#6bb659"></i>transmitted</span>
+          <span><i style="background:#5c6785"></i>absorbed</span>
+        </div>
+        <div class="canvas-hint">drag to orbit · scroll to zoom</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card" id="stat-r"><div class="label">Reflected</div><div class="value">0%</div></div>
+        <div class="stat-card" id="stat-t"><div class="label">Transmitted</div><div class="value">0%</div></div>
+        <div class="stat-card" id="stat-abs"><div class="label">Absorbed</div><div class="value">0%</div></div>
+      </div>
+      <div class="action-row">
+        <button class="action-btn primary" onclick="launchOne()">▶ launch one</button>
+        <button class="action-btn" onclick="runBatch()">⚡ run 150</button>
+        <button class="action-btn" onclick="resetSim()">↺ reset</button>
+      </div>
+      <div class="compare-wrap">
+        <div class="compare-label">Diffuse reflectance across media tried so far</div>
+        <div id="compare-rows"></div>
+      </div>
+    </div>
+
+    <div style="height:20px"></div>
+    <div class="disclaimer"><b>What this is, and isn't:</b> a simplified 3D illustrative model for building intuition, running live in your browser via WebGL. The skin-layer parameters match the real defaults in <code>tissue_optics.py</code>; water presets are illustrative order-of-magnitude only. The validated, citable numbers live in the Python and MATLAB engines linked throughout this page.</div>
+  </div>
+</section>
+
+<section id="finding">
+  <div class="wrap">
+    <div class="section-num">03 — The central finding</div>
+    <h2>Placement, not just magnitude</h2>
+    <p class="section-lead">A homogeneous model fit to a layered medium's bulk-averaged properties can be biased in either direction — the sign depends on where the absorption sits, not only how much of it there is.</p>
+    <div class="finding-card">
+      <div class="finding-grid">
+        <img src="https://raw.githubusercontent.com/Physiker80/photon-transport-toolkit/main/figures/geometry_comparison.png" alt="Sign reversal of the reflectance deviation depending on absorber placement">
+        <div>
+          <div class="stat-line"><div class="n">4/4</div><div class="d">tested configurations flip sign when the stronger absorber moves from shallow to deep</div></div>
+          <div class="stat-line"><div class="n">70σ</div><div class="d">statistical significance in Python — independently reconfirmed up to 47.7σ in MATLAB/Octave</div></div>
+          <div class="stat-line"><div class="n">2</div><div class="d">real implementation bugs caught by validation tests during development, in two different languages</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="validated">
+  <div class="wrap">
+    <div class="section-num">04 — Independent confirmation</div>
+    <h2>Validated twice, in two languages</h2>
+    <p class="section-lead">A from-scratch MATLAB/Octave re-derivation — written from the governing equations, not translated from the Python source — catching real bugs along the way, exactly as intended.</p>
+    <div class="val-grid">
+      <div class="val-card">
+        <div class="lang">Python</div>
+        <h4>Original engine</h4>
+        <p>Weighted-photon Monte Carlo, τ-based layer boundaries, Henyey-Greenstein &amp; Schlick phase functions. 57 tests, GitHub Actions CI on every push.</p>
+        <span class="bug-tag">reduction test caught a boundary-crossing bug</span>
+      </div>
+      <div class="val-card">
+        <div class="lang">MATLAB / Octave</div>
+        <h4>Independent re-derivation</h4>
+        <p>Same physics, written from scratch — different language, different RNG, different boundary-resolution logic. Reconfirmed the sign-flip 4/4, up to 47.7σ.</p>
+        <span class="bug-tag">caught a Fresnel sign-convention bug at 63σ</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="story">
+  <div class="wrap">
+    <div class="section-num">05 — Ten years in the making</div>
+    <h2>Not a new project — a continuation</h2>
+    <p class="section-lead">The same physical question, revisited with better tools.</p>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-year">2014 — Hochschule Aalen</div>
+        <h4>A Master's thesis on scattering, rendered in C</h4>
+        <p>Built custom C-language Zemax DLLs implementing Phong BRDF and two new bulk phase functions — Schlick and von Mises-Fisher — with importance-sampling formulas derived symbolically in Maple. Verified experimentally on a self-built gonioreflectometer using a 6-channel LED array.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2014 — Project EyeStream</div>
+        <h4>The same LED array, a new purpose</h4>
+        <p>The identical 6-channel array (Royal Blue, Cyan, Lime, Amber, Red, Deep Red) became the light source for an independent white-light generation system.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2024 — photon-transport-toolkit</div>
+        <h4>The thesis's own claim, quantitatively re-tested</h4>
+        <p>Implementing <code>schlick_pdf()</code> from scratch and testing it against Henyey-Greenstein: the 2014 claim — "similar, but faster" — holds at moderate anisotropy, and now has a number attached to where it stops holding: <code>g≈0.85–0.9</code>, up to 37σ deviation.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="build">
+  <div class="wrap">
+    <div class="section-num">06 — How it's built</div>
+    <h2>Validation-first, every step</h2>
+    <div class="how-grid">
+      <div class="how-card"><div class="num">01</div><h3>Nothing assumed correct</h3><p>Every claim is checked against an analytically known limit — Beer-Lambert, energy conservation, Fresnel reflectance — before being trusted.</p></div>
+      <div class="how-card"><div class="num">02</div><h3>τ-based boundary crossing</h3><p>Remaining path length carries across internal layer boundaries in optical-depth units — the detail that makes layered media work correctly.</p></div>
+      <div class="how-card"><div class="num">03</div><h3>Real bugs, found and fixed</h3><p>A missing specular-reflectance term, an unresolved multi-boundary case, a Fresnel sign flip — each caught by a test failing exactly as it should.</p></div>
+      <div class="how-card"><div class="num">04</div><h3>Say what wasn't verified</h3><p>Formulas without an independently confirmed source are explicitly left out, not quietly assumed — a documented gap, not a hidden one.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a href="https://github.com/Physiker80/photon-transport-toolkit">github.com/Physiker80/photon-transport-toolkit</a>
+    <div class="foot-meta">Noureddin Sedki, M.Sc. · MIT License</div>
+  </div>
+</footer>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const PRESETS = {
+  clearWater: { label: 'Clear water', layers: [{ name: 'clear water', color: 0x1e3a5c, absorb: 0.004, scatter: 0.10, h: 3.2 }],
+    note: 'Illustrative: water is famously weak at both scattering and absorbing visible light — why a clean pool looks clear to real depth.' },
+  turbidWater: { label: 'Turbid water', layers: [{ name: 'turbid water', color: 0x3a5570, absorb: 0.010, scatter: 1.9, h: 3.2 }],
+    note: 'Illustrative: suspended particles raise scattering by orders of magnitude versus clear water — the same reason milk looks opaque white.' },
+  homogSkin: { label: 'Homogeneous skin', layers: [{ name: 'bulk-averaged skin', color: 0x8a5a3a, absorb: 0.045, scatter: 1.15, h: 3.2 }],
+    note: 'Thickness-weighted average of the layered-skin properties at right — the comparison this project is built around.' },
+  layeredSkin: { label: 'Layered skin', layers: [
+      { name: 'epidermis (melanin)', color: 0xa8452a, absorb: 0.095, scatter: 1.35, h: 0.85 },
+      { name: 'dermis', color: 0xc98a5e, absorb: 0.018, scatter: 1.0, h: 2.35 }
+    ], note: 'Real defaults from tissue_optics.py: epidermis 0.10mm (melanin-dominated, g=0.80), dermis 1.5mm (g=0.90) — scaled for display.' }
+};
+let presetKey = 'clearWater', swapped = false, counts = { r: 0, t: 0, a: 0 }, history = {};
+
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camera.position.set(6, 4, 7);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+wrap.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.autoRotate = true; controls.autoRotateSpeed = 0.6;
+controls.minDistance = 4; controls.maxDistance = 16;
+controls.addEventListener('start', () => { controls.autoRotate = false; });
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const dl = new THREE.DirectionalLight(0xffffff, 1.1); dl.position.set(5, 8, 4); scene.add(dl);
+const dl2 = new THREE.DirectionalLight(0x4d8fdb, 0.35); dl2.position.set(-5, -2, -4); scene.add(dl2);
+
+const MEDIUM_W = 3.4, MEDIUM_D = 3.4;
+let layerGroup = new THREE.Group(); scene.add(layerGroup);
+const edgesGroup = new THREE.Group(); scene.add(edgesGroup);
+const trailGroup = new THREE.Group(); scene.add(trailGroup);
+const photonGroup = new THREE.Group(); scene.add(photonGroup);
+
+function totalHeight() { return currentLayers().reduce((s, l) => s + l.h, 0); }
+function currentLayers() { const base = PRESETS[presetKey].layers; return swapped ? [...base].reverse() : base; }
+
+function rebuildMedium() {
+  layerGroup.clear(); edgesGroup.clear();
+  const layers = currentLayers();
+  let yTop = totalHeight() / 2;
+  layers.forEach(l => {
+    const geo = new THREE.BoxGeometry(MEDIUM_W, l.h, MEDIUM_D);
+    const mat = new THREE.MeshPhysicalMaterial({ color: l.color, transparent: true, opacity: 0.38, roughness: 0.3, metalness: 0.05, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.y = yTop - l.h / 2;
+    layerGroup.add(mesh);
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x37415a }));
+    edges.position.copy(mesh.position);
+    edgesGroup.add(edges);
+    yTop -= l.h;
+  });
+  const h = totalHeight();
+  camera.position.set(h * 1.5, h * 0.9, h * 1.7);
+  controls.target.set(0, 0, 0);
+  controls.update();
+}
+
+function layerAt(yWorld) {
+  const layers = currentLayers();
+  let top = totalHeight() / 2;
+  for (const l of layers) { if (yWorld > top - l.h) return l; top -= l.h; }
+  return layers[layers.length - 1];
+}
+
+function randDeflect(dir, amount) {
+  const rnd = new THREE.Vector3((Math.random()-0.5), (Math.random()-0.5), (Math.random()-0.5));
+  const perturbed = dir.clone().addScaledVector(rnd, amount).normalize();
+  return perturbed;
+}
+
+function simulatePhoton() {
+  const halfH = totalHeight() / 2;
+  let pos = new THREE.Vector3(0, halfH, 0);
+  let dir = new THREE.Vector3(0, -1, 0);
+  const path = [pos.clone()];
+  let outcome = 'a';
+  for (let step = 0; step < 400; step++) {
+    const layer = layerAt(pos.y);
+    const deflect = 0.15 + layer.scatter * 0.55;
+    dir = randDeflect(dir, deflect);
+    const stepLen = 0.16;
+    pos = pos.clone().addScaledVector(dir, stepLen);
+    pos.x = Math.max(-MEDIUM_W/2+0.05, Math.min(MEDIUM_W/2-0.05, pos.x));
+    pos.z = Math.max(-MEDIUM_D/2+0.05, Math.min(MEDIUM_D/2-0.05, pos.z));
+    path.push(pos.clone());
+    if (pos.y >= halfH) { outcome = Math.random() < 0.9 ? 'r' : 'a'; if (outcome === 'a') { dir.y = -Math.abs(dir.y); pos.y = halfH - 0.02; continue; } break; }
+    if (pos.y <= -halfH) { outcome = Math.random() < 0.9 ? 't' : 'a'; if (outcome === 'a') { dir.y = Math.abs(dir.y); pos.y = -halfH + 0.02; continue; } break; }
+    if (Math.random() < layer.absorb) { outcome = 'a'; break; }
+  }
+  return { path, outcome };
+}
+
+function drawTrail(path, outcome, fade) {
+  const color = outcome === 'r' ? 0x4d8fdb : outcome === 't' ? 0x6bb659 : 0x5c6785;
+  const pts = path.map(p => new THREE.Vector3(p.x, p.y, p.z));
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.75 });
+  const line = new THREE.Line(geo, mat);
+  trailGroup.add(line);
+  if (fade) {
+    let op = 0.75;
+    const iv = setInterval(() => { op -= 0.03; mat.opacity = Math.max(0, op); if (op <= 0) { trailGroup.remove(line); geo.dispose(); mat.dispose(); clearInterval(iv); } }, 60);
+  } else {
+    setTimeout(() => { trailGroup.remove(line); geo.dispose(); mat.dispose(); }, 4000);
+  }
+}
+
+function launchOne() {
+  const result = simulatePhoton();
+  counts[result.outcome]++;
+  const geo = new THREE.SphereGeometry(0.05, 12, 12);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xf2a23c });
+  const dot = new THREE.Mesh(geo, mat);
+  photonGroup.add(dot);
+  drawTrail(result.path, result.outcome, false);
+  let i = 0; const path = result.path;
+  const iv = setInterval(() => {
+    if (i >= path.length) { clearInterval(iv); photonGroup.remove(dot); geo.dispose(); mat.dispose(); updateStats(); return; }
+    dot.position.copy(path[i]); i++;
+  }, 14);
+}
+
+function runBatch() {
+  for (let i = 0; i < 150; i++) {
+    const result = simulatePhoton();
+    counts[result.outcome]++;
+    if (i % 5 === 0) drawTrail(result.path, result.outcome, true);
+  }
+  updateStats();
+}
+
+function resetSim() { counts = { r: 0, t: 0, a: 0 }; trailGroup.clear(); photonGroup.clear(); updateStats(); }
+function scenarioLabel() { const l = PRESETS[presetKey].label; return presetKey === 'layeredSkin' && swapped ? l + ' (swapped)' : l; }
+function updateStats() {
+  const n = counts.r + counts.t + counts.a;
+  const pct = x => n ? Math.round(100*x/n) : 0;
+  document.querySelector('#stat-r .value').textContent = pct(counts.r) + '%';
+  document.querySelector('#stat-t .value').textContent = pct(counts.t) + '%';
+  document.querySelector('#stat-abs .value').textContent = pct(counts.a) + '%';
+  if (n >= 15) { history[scenarioLabel()] = counts.r / n; renderCompare(); }
+}
+function renderCompare() {
+  const rows = document.getElementById('compare-rows'); rows.innerHTML = '';
+  const maxRd = Math.max(0.01, ...Object.values(history));
+  Object.entries(history).forEach(([label, rd]) => {
+    const row = document.createElement('div'); row.className = 'compare-row';
+    row.innerHTML = '<div class="compare-name">'+label+'</div><div class="compare-track"><div class="compare-fill" style="width:'+Math.round(100*rd/maxRd)+'%"></div></div><div class="compare-val">'+Math.round(rd*100)+'%</div>';
+    rows.appendChild(row);
+  });
+}
+
+window.setPreset = function(key) {
+  presetKey = key; swapped = false;
+  document.getElementById('swap-row').style.display = key === 'layeredSkin' ? 'block' : 'none';
+  ['clearWater','turbidWater','homogSkin','layeredSkin'].forEach(k => document.getElementById('p-'+k).classList.toggle('active', k===key));
+  document.getElementById('param-note').textContent = PRESETS[presetKey].note;
+  rebuildMedium(); resetSim();
+};
+window.swapLayers = function() { swapped = !swapped; rebuildMedium(); resetSim(); };
+window.launchOne = launchOne; window.runBatch = runBatch; window.resetSim = resetSim;
+
+function resize() {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w, h); camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+
+function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+setPreset('clearWater');
+resize();
+animate();
+
+/* scroll-spy for nav dots */
+const secIds = ['physics','simulate','finding','validated','story','build'];
+const dotEls = document.querySelectorAll('nav.dots a');
+window.addEventListener('scroll', () => {
+  let current = secIds[0];
+  secIds.forEach(id => { const el = document.getElementById(id); if (el && window.scrollY >= el.offsetTop - 200) current = id; });
+  dotEls.forEach((d,i) => d.classList.toggle('active', secIds[i] === current));
+});
+</script>
+</body>
+</html>

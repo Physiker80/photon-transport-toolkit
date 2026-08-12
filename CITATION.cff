@@ -1,0 +1,81 @@
+cff-version: 1.2.0
+title: "photon-transport-toolkit: Monte Carlo photon transport in turbid media, with phase- and polarization-resolved extensions"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - given-names: Noureddin
+    family-names: Sedki
+    affiliation: "Berlin, Germany"
+version: 1.7.0
+date-released: "2026-08-12"
+license: MIT
+abstract: >-
+  A weighted-photon Monte Carlo model of light transport in scattering and
+  absorbing media, implemented from first principles following the MCML
+  formulation and validated against analytically known limiting cases and an
+  independent MATLAB/Octave re-derivation. Extended to arbitrarily layered
+  media, to phase-resolved (coherent-field) transport producing speckle, and
+  to polarization-resolved transport carrying a Jones vector and its optical
+  path length together, with Rayleigh or Mie scattering. An optional
+  JAX-batched backend covers Rayleigh scattering at large photon counts
+  (recommended above roughly 150,000 photons on CPU, per a measured
+  benchmark documented alongside a design fix that recovered it from an
+  initial four-times-slower result). The grating spectrometer model
+  originally distributed here now lives in the separate repository
+  grating-spectrometer-model.
+keywords:
+  - optics
+  - photonics
+  - Monte Carlo
+  - light scattering
+  - turbid media
+  - spectroscopy
+  - biomedical optics
+  - polarization
+  - Mie scattering
+  - speckle
+references:
+  - type: article
+    authors:
+      - family-names: Wang
+        given-names: Lihong
+      - family-names: Jacques
+        given-names: "Steven L."
+      - family-names: Zheng
+        given-names: Liqiong
+    title: "MCML - Monte Carlo modeling of light transport in multi-layered tissues"
+    journal: "Computer Methods and Programs in Biomedicine"
+    volume: 47
+    start: 131
+    end: 146
+    year: 1995
+  - type: article
+    authors:
+      - family-names: Henyey
+        given-names: "Louis G."
+      - family-names: Greenstein
+        given-names: "Jesse L."
+    title: "Diffuse radiation in the galaxy"
+    journal: "Astrophysical Journal"
+    volume: 93
+    start: 70
+    end: 83
+    year: 1941
+  - type: book
+    authors:
+      - family-names: Bohren
+        given-names: "Craig F."
+      - family-names: Huffman
+        given-names: "Donald R."
+    title: "Absorption and Scattering of Light by Small Particles"
+    publisher:
+      name: Wiley
+    year: 1983
+  - type: book
+    authors:
+      - family-names: Goodman
+        given-names: "Joseph W."
+    title: "Speckle Phenomena in Optics: Theory and Applications"
+    publisher:
+      name: "Roberts & Company"
+    year: 2007

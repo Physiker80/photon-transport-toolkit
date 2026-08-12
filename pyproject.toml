@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "photon-transport-toolkit"
+version = "1.7.0"
+description = "Monte Carlo photon transport in turbid media: layered, phase-resolved, and polarization-resolved"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Noureddin Sedki" }]
+keywords = ["optics", "photonics", "monte-carlo", "light-scattering", "polarization", "mie-scattering", "speckle", "biomedical-optics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = ["numpy>=1.24", "matplotlib>=3.7"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+# Optional third-party Mie implementation, used only to cross-check this
+# project's own Mie series in tests/test_mie.py. The test skips when it is
+# absent, so this is never required to run the suite.
+crosscheck = ["miepython>=2.5"]
+# Optional accelerated batch backend (vector_transport_jax.py), Rayleigh
+# scattering only, recommended only above roughly 150,000 photons per run
+# on CPU -- see that module's docstring for the measured benchmark this
+# threshold comes from. tests/test_vector_transport_jax.py skips entirely
+# when jax is absent, so this is never required to run the suite.
+jax = ["jax>=0.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
