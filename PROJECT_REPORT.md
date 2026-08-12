@@ -189,6 +189,17 @@ That fitting a homogeneous model to layered tissue produces error whose magnitud
 
 Neither isolates the sign of the *raw forward-model* reflectance bias itself, independent of any fitting procedure, as a function of *where* a fixed absorption contrast is placed while the bulk average and both absorption values are held exactly fixed — the specific, controlled ablation §8 performs. The two are complementary rather than competing: their results describe the error a practitioner's fit will show under realistic, varying tissue regimes; this section's result isolates the forward-model mechanism that placement alone can produce, with every other variable pinned down. A direct quantitative comparison between the two framings has not been made.
 
+### 8.3 A comparison with Hennessy et al. — not a reproduction
+
+`examples/hennessy_reproduction.py` tests whether the sign-dependence Hennessy et al. report for a *fitted* SO2 parameter also shows up in the *raw* ΔR this project's central finding concerns. Using a two-layer skin model — melanin (Jacques 2013 formula, already in `tissue_optics.py`) fixed in the epidermis, blood absorption (Prahl/OMLC molar extinction spectra, fetched directly and independently cross-checked against the codebase's existing `blood_absorption_mm()` before use) in the dermis — at 660 nm (strong oxy-/deoxyhemoglobin differential, within their 400–750 nm range), SO2 = 30% and 70%, with epidermal/dermal thickness and total hemoglobin concentration held fixed:
+
+| SO2 | Dermis μₐ (mm⁻¹) | Homogeneous μₐ (mm⁻¹) | ΔR | σ |
+|---|---|---|---|---|
+| 30% | 0.0193 | 0.0467 | −0.0361 | −9.2 |
+| 70% | 0.0098 | 0.0376 | −0.0313 | −7.2 |
+
+**No sign flip, at full statistical power in both directions.** This is not a failed reproduction — it is the expected result once the two quantities are recognized as different. Hennessy et al.'s sign-dependent bias lives in a *fitted* SO2 recovered from a multi-wavelength spectral inversion that separates melanin from hemoglobin; this comparison's ΔR is a *raw, single-wavelength* forward bias, and melanin's placement — fixed at the surface throughout, since only SO2 was varied, not anatomical position — dominates its sign regardless of the dermal SO2 value. Varying SO2 at fixed placement changes the bulk average without flipping ΔR's sign in this simpler quantity; swapping placement alone, with the bulk average held *exactly* fixed (§8 above), does. That contrast — not a match to their specific number — is what this comparison is for. A literal reproduction of their fitted-SO2 result would require the same multi-wavelength spectral-inversion machinery they use; that has not been attempted here (see §14's own account of when this project chooses to say "not attempted" rather than force a result).
+
 ---
 
 ## 9. Results IV — Integrated Spectral Simulation
