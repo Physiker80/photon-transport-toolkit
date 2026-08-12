@@ -128,6 +128,23 @@ Described in §3.5; implemented as two paired tests — one confirming g-invaria
 | `test_mie.py` | 22 | Mie series against its analytic limits, internal identities, an independent implementation, and the polarization-memory reversal (§13.8–13.10) |
 | `test_vector_transport_jax.py` | 13 | Statistical agreement with the reference engine, exact energy conservation, both unresolved-event diagnostics, the measured backend-recommendation threshold (§14) — skips entirely if jax is not installed |
 
+### 5.5 Uncertainty: how every number here is computed, and what it doesn't cover
+
+Every Monte Carlo result in this report is reported as **mean ± standard error**, and it is computed the same way regardless of which engine produced it: photons are split into `n_batches` independent batches, each with its own random seed, and the standard error is the spread *between batch means*, divided by √(n_batches) — not a shot-noise formula assumed from theory. As the base engine's own docstring puts it, this is so the uncertainty "can be estimated from the spread between batch means, rather than assumed." An assumed formula can be wrong in ways an empirical spread across independent runs cannot; the cost is needing enough batches (this project defaults to 5–10) for that spread itself to be a reliable estimate.
+
+The reason this gets a dedicated paragraph rather than a units footnote is that the same true effect can look like noise or like certainty depending only on how hard you look — this project's single most repeated demonstration, at three different scales:
+
+| Result | N = 150 | N = 150,000 | N = 50,000,000 |
+|---|---|---|---|
+| Central finding, ΔR (§8.1) | 0.48σ — indistinguishable from noise | 16.4σ — clear | — |
+| Russian-roulette bookkeeping bias (§11.5) | 0.34σ — undetectable | 13.6σ — clear | 301.7σ — deterministic |
+
+Same medium, same code, same physics — only the sample size changed. Separately, the central finding was also confirmed a second way rather than a bigger way: independently re-derived in MATLAB/Octave, it reaches 47.7σ there against 70σ in Python (§11.3) — two different implementations agreeing is a different, stronger kind of evidence than one implementation run twice.
+
+A high σ is not by itself evidence of something worth acting on, and a nonzero one is not automatically a bug — telling those apart needs physical reasoning about *why* a gap should or shouldn't be there, not just its size. §13.6 is the clearest example in this report: the polarization-resolved and scalar engines disagree at 3.6σ for one medium and are consistent with zero (0.6σ) for another. That pattern is exactly what §5.3's similarity-relation test predicts — real physics, not a bug — and would have been impossible to tell apart from a bug using the σ values alone.
+
+What this method does not cover: floating-point differences between engines (the JAX backend's float32 against the reference's float64, §14) sit far below any uncertainty in the table above and are never folded into a reported stderr; nor are structural choices — which phase function, how finely the Mie angular grid is resolved — folded in either. Those are checked separately, against analytic limits and independent re-derivations (§5.1–5.3), not averaged into a single number that would hide rather than surface them.
+
 ---
 
 ## 6. Results I — Does Layering Matter?
@@ -165,6 +182,12 @@ The interactive 3D demo (`docs/index.html`) lets a visitor run as few as 150 pho
 ![Photon count comparison — the same bias at N=150 vs N=150,000](figures/photon_count_comparison.png)
 
 At **N=150**, ΔR = −0.030 ± 0.063 — **0.48σ**, statistically indistinguishable from zero. The central finding of this entire project would not have been visible at that sample size. At **N=150,000** (the large layered run chunked across 9 independent batches and combined — the same n_batches mechanism used throughout this package, just invoked repeatedly — see the script for the exact method), ΔR = −0.058 ± 0.0036 — **16.4σ**. Same medium, same code, same physics; only the sample size changed. This is not a caveat about this one result — it is the reason every figure in this report reports a standard error, and the reason §5's validation methodology insists on it before any claim is trusted.
+
+### 8.2 Relation to prior work on the single-layer approximation's error
+
+That fitting a homogeneous model to layered tissue produces error whose magnitude, and in derived parameters its direction, depends on tissue regime is itself established — checked directly against the literature rather than assumed. Hennessy, Markey & Tunnell<sup>8</sup> fit one-layer models to two-layer-generated skin spectra and find hemoglobin and melanin concentration systematically *underestimated* (magnitude growing with epidermal thickness), and a *derived ratio* parameter — oxygen saturation — over- or under-estimated depending on which side of 50% the true value falls: a sign-dependent result, but in a downstream inverse-fit parameter, with each chromophore's anatomical layer held fixed. Jones, Reitzle & Kienle<sup>9</sup> quantify how the same single-layer assumption produces systematic μₐ–μₛ′ cross-talk whose sign and size depend on the two layers' optical properties, again via inverse fitting.
+
+Neither isolates the sign of the *raw forward-model* reflectance bias itself, independent of any fitting procedure, as a function of *where* a fixed absorption contrast is placed while the bulk average and both absorption values are held exactly fixed — the specific, controlled ablation §8 performs. The two are complementary rather than competing: their results describe the error a practitioner's fit will show under realistic, varying tissue regimes; this section's result isolates the forward-model mechanism that placement alone can produce, with every other variable pinned down. A direct quantitative comparison between the two framings has not been made.
 
 ---
 
@@ -382,6 +405,8 @@ Agreement at 0.1σ, 0.7σ and 0.0σ across three media spanning a factor of five
 
 ![Phase and polarization together: co- and cross-polarized speckle, DoLP map, and the contrast a phase-only engine cannot get right](figures/polarized_speckle_comparison.png)
 
+This is not a new physical effect. Goodman's formula above is textbook, and a JBO review of LSCI's own theoretical limits states its standard instrumentation constant β explicitly accounts for loss of correlation "related to the ratio of the detector/pixel size to the speckle size, and to polarization" — the depolarization-driven contrast floor is already folded into the field's standard model. What this section adds is the explicit, *computed* (not assumed) finite-n_eff correction above, and an open, cross-validated engine that reproduces the textbook prediction from first principles rather than citing it.
+
 The practical reading is direct. Laser speckle contrast imaging (LSCI) infers blood flow from a drop in contrast. An LSCI instrument detecting *without* a polarizer has a static contrast floor set by depolarization alone, with no flow involved anywhere in it — and a phase-only Monte Carlo model of that instrument would attribute the entire gap between its predicted 1.0 and the measured ~0.7 to something else: flow, exposure time, or detector averaging. The same figure's first two panels are the design basis for cross-polarized imaging, where an analyzer crossed with the illumination suppresses the surface-preserving, polarization-preserving light and passes the multiply-scattered deep signal.
 
 ### 13.6 One discrepancy, stated rather than smoothed over
@@ -395,6 +420,8 @@ What has *not* been done is a systematic map of that gap versus optical depth, w
 Single homogeneous slab, static medium, and — *as of the version described up to this point* — Rayleigh scattering only. Mie scattering was identified here as the first gap, on the grounds that it is the physically relevant regime for cells and organelles and the reason real tissue depolarizes circular and linear light at different rates; §13.8–13.10 close that gap and report what changed. Still not included: layered vector media, and dynamic scattering — the Doppler phase shift `Δφ = q⃗·v⃗τ` that would turn this engine into a diffuse-correlation-spectroscopy and full LSCI model rather than a static-contrast one. The state vector already carries everything those extensions need; what is missing is the scattering physics, not the transport machinery.
 
 ### 13.8 From Rayleigh to Mie
+
+**A note on novelty, stated before the result rather than after it:** polarization memory itself is well-established physics, not discovered here — known since the late 1980s, studied through the Mie regime for decades, and revisited as recently as a 2025/2026 *Laser & Photonics Reviews* paper asking essentially the question this section answers. What follows is a from-scratch, independently cross-validated (against `miepython`, §13.8) open demonstration of that established effect, plus one genuine methodological finding along the way (§13.9): three plausible ways of measuring "retained polarization" were tried and rejected before finding one that does not silently hide the effect being measured.
 
 §13.7 listed Mie scattering as the first gap, on the grounds that real tissue scatterers — nuclei, mitochondria, collagen bundles — are comparable to or larger than an optical wavelength, where the dipole approximation does not apply. `src/photon_transport_toolkit/mie.py` closes it: the standard Mie series (Bohren & Huffman 1983, ch. 4), written from the recurrences, with the logarithmic derivative `Dₙ(mx)` computed by *downward* recurrence — upward recurrence is unstable for absorbing particles and is the classic failure mode of hand-written Mie codes.
 
@@ -592,6 +619,8 @@ See [README.md](README.md) for the full quickstart, module-by-module usage examp
 5. Jacques, S. L. Skin Optics. *Oregon Medical Laser Center News*, Jan 1998. https://omlc.org/news/jan98/skinoptics.html
 6. Understanding multi-layered transmission matrices. arXiv:2410.23864 (2024).
 7. Feng, B. Y., Guo, H., Xie, M. et al. NeuWS: Neural wavefront shaping for guidestar-free imaging through static and dynamic scattering media. *Sci. Adv.* 9, eadg4671 (2023).
+8. Hennessy, R., Markey, M. K. & Tunnell, J. W. Impact of one-layer assumption on diffuse reflectance spectroscopy of skin. *J. Biomed. Opt.* 20, 027001 (2015).
+9. Jones, Z. D., Reitzle, D. & Kienle, A. Spectrally-resolved errors in absorption and reduced scattering due to μₐ–μₛ′ cross-talk in layered media. *Biomed. Opt. Express* 16, 5135–5149 (2025).
 
 ---
 

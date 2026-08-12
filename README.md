@@ -26,6 +26,8 @@ Which layer carries a fixed absorption contrast — holding total thickness and 
 
 ![Sign-flip finding](figures/geometry_comparison.png)
 
+That a single-layer fit to layered tissue produces regime-dependent error is itself established: Hennessy, Markey & Tunnell (*J. Biomed. Opt.* 2015) show it in fitted hemoglobin, melanin, and oxygen-saturation estimates, and Jones, Reitzle & Kienle (*Biomed. Opt. Express* 2025) in μₐ–μₛ′ cross-talk — both via inverse fitting. What's isolated here is narrower and sits underneath both: the sign of the raw forward-model reflectance bias itself, under a controlled swap of absorber placement with the bulk average and both absorption values held exactly fixed, before any fitting is involved. See PROJECT_REPORT §8 and §15 for the full positioning against this prior work.
+
 This holds up under a specific, quantified caveat: at N=150 the same measurement is 0.48σ — statistically indistinguishable from noise. At N=150,000 it's 16.4σ. Every number in this project is reported with an uncertainty for exactly that reason.
 
 ---
@@ -74,13 +76,13 @@ Every module was implemented from first principles and validated against an anal
 
 ## Three results beyond the central finding
 
-**Polarization memory** (Mie scattering, §13.8–13.10): under Rayleigh scattering, linear polarization survives multiple scattering roughly 6× longer than circular. For particles comparable to the wavelength, that ordering **reverses** — the physical basis for circular-polarization gating in tissue imaging.
+**Polarization memory** (Mie scattering, §13.8–13.10): under Rayleigh scattering, linear polarization survives multiple scattering roughly 6× longer than circular. For particles comparable to the wavelength, that ordering **reverses**. This is established physics, not a new finding — known since the late 1980s and revisited as recently as *Laser & Photonics Reviews* (2025) — reproduced here as a from-scratch, independently cross-validated demonstration (Mie series checked against `miepython` to 9–10 significant figures), with one genuine methodological addition: three plausible ways of measuring "retained polarization" were tried and rejected before finding one that doesn't silently hide the effect (§13.9).
 
 ![Polarization memory](figures/mie_polarization_memory.png)
 
-**Depolarization sets a speckle-contrast floor** (§13.5): a phase-only model of laser speckle contrast imaging predicts contrast = 1.0 regardless of medium. The combined phase-and-polarization engine shows the real floor is 0.68–0.75, purely from depolarization — a gap a phase-only model would otherwise attribute entirely to blood flow.
+**Depolarization sets a speckle-contrast floor** (§13.5): a phase-only model of laser speckle contrast imaging predicts contrast = 1.0 regardless of medium. The combined phase-and-polarization engine shows the real floor is 0.68–0.75, purely from depolarization. This follows directly from Goodman's textbook partially-polarized-speckle formula and is already folded into laser speckle contrast imaging's standard instrumentation model — the addition here is an explicit, computed (not assumed) finite-sample correction to the asymptotic prediction.
 
-**A decade-old thesis claim, re-tested** (§4): the Schlick phase-function approximation, used in the author's own 2014 thesis as "similar to Henyey-Greenstein but faster," holds at moderate anisotropy but diverges up to 37σ near tissue-relevant g ≈ 0.85–0.9. The speed claim holds (1.10–1.15× faster).
+**A decade-old thesis claim, re-tested** (§4): the Schlick phase-function approximation, used in the author's own 2014 thesis as "similar to Henyey-Greenstein but faster," holds at moderate anisotropy but diverges up to 37σ near tissue-relevant g ≈ 0.85–0.9. The speed claim holds (1.10–1.15× faster). Not checked against prior quantitative Schlick-vs-Henyey-Greenstein comparisons in the literature — the only one of these three not yet run through a literature check.
 
 ---
 
