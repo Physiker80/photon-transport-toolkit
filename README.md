@@ -22,7 +22,7 @@ reproduces a commercial instrument.
 
 📄 **[PROJECT_REPORT.md](PROJECT_REPORT.md)** is the full account — methodology, every result, every validation step, and the complete story behind the JAX backend, including a first attempt that turned out to be four times slower. This README is the short version.
 
-🌐 Two interactive demo pages, same underlying engine: [**index**](https://physiker80.github.io/photon-transport-toolkit/) (short) and [**index_1**](https://physiker80.github.io/photon-transport-toolkit/index_1.html) (narrative walkthrough).
+🌐  interactive demo pages, same underlying engine: [**index**](https://physiker80.github.io/photon-transport-toolkit/)  (narrative walkthrough).
 
 ---
 
