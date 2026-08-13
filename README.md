@@ -5,6 +5,11 @@
 [![Try the interactive simulation](https://img.shields.io/badge/▶_Try_the_interactive_simulation-1F3864?style=for-the-badge)](https://physiker80.github.io/photon-transport-toolkit/)
 [![Tests](https://img.shields.io/badge/tests-110_passing-3B6D11?style=for-the-badge)](tests/)
 [![Cross-checked](https://img.shields.io/badge/cross--checked-Python_%2B_MATLAB%2FOctave-C00000?style=for-the-badge)](matlab/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+[![CUDA 12](https://img.shields.io/badge/CUDA-12.x-green.svg)](https://developer.nvidia.com/cuda-toolkit)
+[![Tests: 110+](https://img.shields.io/badge/tests-110%2B-brightgreen.svg)](#validation)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXX.svg)](https://doi.org/10.5281/zenodo.XXXX)
 
 This model addresses the same physics as my M.Sc. thesis, *"Simulation of
 scattering processes in turbid media with ZEMAX and experimental
